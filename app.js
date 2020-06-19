@@ -5,11 +5,17 @@ const crypto=require('crypto');
 const bcrypt=require('bcryptjs');
 const bodyParser=require('body-parser')
 const morgan=require('morgan');
-const User=require('./models/user');
+var CodeGenerator = require('node-code-generator');
+var generator = new CodeGenerator();
+
 const  mongoose  = require('mongoose');
 const jwt=require('jsonwebtoken');
 const keys=require('./config/keys');
 const app=express();
+
+const User=require('./models/user');
+const Email=require('./models/email');
+
 
 
 app.use(morgan('dev'))
@@ -26,23 +32,17 @@ mongoose.connect(keys.mongo_uri)
 
 app.post('/otp/send',async(req,res,next)=>{
     try{
-    var token;
     const email=req.body.email;
-    const existed=await User.findOne({email})
+    const existed=await Email.findOne({email})
     if(existed){
       return   res.status(400).json({
             message:'email used '
         })
     }
 
-    crypto.randomBytes(4,(err,buffer)=>{
-        if(err){
-            res.status(400).json({
-                message:'err'
-            })
-        }
-        token=buffer.toString('hex');
-        const transporter=nodemailer.createTransport(nodeTransport({
+    const token = generator.generateCodes("#+#+#", 100)[0];
+
+    const transporter=nodemailer.createTransport(nodeTransport({
             auth:{ api_key:keys.email_key}
        }))
    
@@ -54,38 +54,42 @@ app.post('/otp/send',async(req,res,next)=>{
                 <h4> the verfy code is  ${token}  </h4> `
        })
    
-       const user=new User({
+       const email1=new Email({
            email,
            verify_code:token
        })
-       user.save()
+       await email1.save()
        res.status(201).json({
         result:"successfully verfy your email",
         email:email
     })
-    }) 
-}
+    }
 catch(error){
-    throw error
+    throw res.status(500).json({error})
 }
 })
 
 
 app.post('/otp/verify',async(req,res,next)=>{
-    const token=req.body.verify_code;
+    try{
+    const verify_code=req.body.verify_code;
     const email=req.body.email;
-    const user=await User.findOne({email,verify_code:token})
-    if(!user){
+    const email1=await Email.findOne({email,verify_code})
+    if(!email1){
        return res.status(404).json({
             message:"not founded ya mlkt"
         })
     }
     
-    user.confirmed= "true"
-    await user.save()
+    email1.confirmed= true
+    await email1.save()
     res.status(200).json({
         message:"the email confirmed successfully ya 3aaam"
     })
+}
+catch(err){
+    res.status(500).json({err})
+}
 
 })
 
@@ -96,30 +100,33 @@ app.post('/signup',async(req,res,next)=>{
     const nameEn=req.body.nameEn;
     const password=req.body.password;
 
-    const user =await User.findOne({email,confirmed:true});
-    if(!user){
+    const email1 =await Email.findOne({email,confirmed:true});
+    if(!email1){
         return res.status(404).json({
             message:"the email hasn't confirmed yet pleasse confirm"
         })
     }
     const accessToken=jwt.sign({
-        sub:user.id,
-    },'secret',{expiresIn:'1h'})
+        sub:email1.id,
+    },keys.keyy,{expiresIn:'1h'})
 
     const hashed=await bcrypt.hash(password,12)
-    user.nameAr=nameAr;
-    user.nameEn=nameEn;
-    user.password=hashed;
+
+    const user=new User({
+    email:email,
+    nameAr:nameAr,
+    nameEn:nameEn,
+    password:hashed
+    })
     await user.save();
     res.status(201).json({
         token:accessToken,
         message:"user is created ya man",
         email:email,
-        
     })
 }
 catch(error){
-    throw error
+    throw res.status(500).json({error})
 }
 })
 
@@ -128,12 +135,13 @@ app.post('/signin',async(req,res,next)=>{
     try{
     const email=req.body.email;
     const password=req.body.password;
-    const user=await User.findOne({email,confirmed:true});
-    if(!user){
+    const email1=await Email.findOne({email,confirmed:true});
+    if(!email1){
         return res.status(404).json({
             message:"the email is not founded"
         })
     }
+    const user=await User.findOne({email})
     const doMathch=await bcrypt.compare(password,user.password);
     if(!doMathch){
         return res.status(400).json({
@@ -142,7 +150,7 @@ app.post('/signin',async(req,res,next)=>{
     }
     const accessToken=jwt.sign({
         sub:user.id,
-    },'secret',{expiresIn:'1h'})
+    },keys.keyy,{expiresIn:'1h'})
 
     res.status(200).json({
         message:"sucess",
@@ -150,7 +158,8 @@ app.post('/signin',async(req,res,next)=>{
     })
 }
 catch(error){
-    throw error
+    throw res.status(500).json({error})
+
 }
 })
 
@@ -158,23 +167,17 @@ catch(error){
 app.post('/forget-password/send',async(req,res,next)=>{
     try{
     const email=req.body.email;
-    const user=await User.findOne({email});
-    if(!user){
+    const email1=await Email.findOne({email});
+    if(!email1){
         return res.status(404).json({
             message:"the email is not founded"
         })
     }
-    var token;
-    crypto.randomBytes(4,(err,buffer)=>{
-        if(err){
-           return res.status(400).json({
-                message:'err'
-            })
-        }
-        token=buffer.toString('hex');
+    const token = generator.generateCodes("#+#+#", 100)[0];
+
         console.log(token)
         const transporter=nodemailer.createTransport(nodeTransport({
-            auth:{ api_key:'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'}
+            auth:{ api_key:keys.email_key}
        }))
     
        transporter.sendMail({
@@ -185,17 +188,17 @@ app.post('/forget-password/send',async(req,res,next)=>{
                 <h4> the verfy code is  ${token}  </h4> `
        })
        console.log(token)
-       user.confirmed=false;
-       user.verify_code=token;
-       user.save()
+       email1.confirmed=false;
+       email1.verify_code=token;
+       email1.save()
        res.status(200).json({
            message:"check your mail for the verfy code"
        })
 
-    })
 }
 catch(error){
-    throw error
+    throw res.status(500).json({error})
+
 }
 })
 
@@ -205,22 +208,23 @@ app.post('/forget-password/verify',async(req,res,next)=>{
     const email=req.body.email;
     const verify_code=req.body.verify_code;
     const password=req.body.password;
-    const user=await User.findOne({email,verify_code,confirmed:"false"})
-    if(!user){
+    const email1=await Email.findOne({email,verify_code,confirmed:"false"})
+    if(!email1){
             return res.status(404).json({
                 message:"the email is not founded"
             })
     }
     const hashed=await bcrypt.hash(password,12)
-    user.password=hashed;
-    user.confirmed=true;
-    await user.save();
+    email1.password=hashed;
+    email1.confirmed=true;
+    await email1.save();
     res.status(200).json({
         message:"sucees the password has reset"
     })
 }
 catch(error){
-    throw error
+    throw res.status(500).json({error})
+
 }
 })
 
@@ -232,31 +236,35 @@ app.post('/change-password',async(req,res,next)=>{
     const password=req.body.password;
     const newPassword=req.body.newPassword;
 
-    const user=await User.findOne({email})
-    if(!user){
+    const email1=await Email.findOne({email})
+    if(!email1){
         return res.status(404).json({
             message:"the email is not founded"
         })
     }
-    const doMathch=await bcrypt.compare(password,user.password)
+    const doMathch=await bcrypt.compare(password,email1.password)
     if(!doMathch){
         return res.status(400).json({
             message:"the password not correct"
         })
     }
     const hashed=await bcrypt.hash(newPassword,12)
-    user.password=hashed;
-    await user.save();
+    email1.password=hashed;
+    await email1.save();
     res.status(200).json({
         message:"password has changed successfully"
     });
 }
 catch(error){
-    throw error
+    throw res.status(500).json({error})
+
 }
 })
 
 
 app.listen(process.env.PORT||8080,()=>{
  console.log('ruun')
+
+
+
 })
