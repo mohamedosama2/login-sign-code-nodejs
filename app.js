@@ -208,7 +208,7 @@ app.post('/forget-password/verify',async(req,res,next)=>{
     const email=req.body.email;
     const verify_code=req.body.verify_code;
     const password=req.body.password;
-    const email1=await Email.findOne({email,verify_code,confirmed:"false"})
+    const email1=await Email.findOne({email,verify_code,confirmed:false})
     if(!email1){
             return res.status(404).json({
                 message:"the email is not founded"
