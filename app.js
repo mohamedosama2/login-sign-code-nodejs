@@ -250,8 +250,8 @@ app.post('/change-password',async(req,res,next)=>{
         })
     }
     const hashed=await bcrypt.hash(newPassword,12)
-    email1.password=hashed;
-    await email1.save();
+    user.password=hashed;
+    await user.save();
     res.status(200).json({
         message:"password has changed successfully"
     });
