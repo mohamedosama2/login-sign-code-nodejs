@@ -242,7 +242,8 @@ app.post('/change-password',async(req,res,next)=>{
             message:"the email is not founded"
         })
     }
-    const doMathch=await bcrypt.compare(password,email1.password)
+    const user=await User.findOne({email})
+    const doMathch=await bcrypt.compare(password,user.password)
     if(!doMathch){
         return res.status(400).json({
             message:"the password not correct"
