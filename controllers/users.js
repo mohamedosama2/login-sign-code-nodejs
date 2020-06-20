@@ -26,9 +26,9 @@ exports.otpSend =async(req,res,next)=>{
             auth:{ api_key:process.env.email_key}
        }))
    
-       transporter.sendMail({
+    transporter.sendMail({
            to:email,
-           from:'latokalatohamato@gmail.com',
+           from:'mohamed.osama.kamel11111@gmail.com',
            subject:'hello',
            html:`<h1>  registered successfully yaa 3m</h1>
                 <h4> the verfy code is  ${token}  </h4> `
@@ -86,12 +86,9 @@ exports.signUp= async(req,res,next)=>{
             message:"the email hasn't confirmed yet pleasse confirm"
         })
     }
-    const accessToken=jwt.sign({
-        sub:email1.id,
-    },process.env.keyy,{expiresIn:'1h'})
+    
 
     const hashed=await bcrypt.hash(password,12)
-
     const user=new User({
     email:email,
     nameAr:nameAr,
@@ -99,6 +96,10 @@ exports.signUp= async(req,res,next)=>{
     password:hashed
     })
     await user.save();
+    const accessToken=jwt.sign({
+        sub:user._id,
+    },process.env.keyy,{expiresIn:'1h'})
+    
     res.status(201).json({
         token:accessToken,
         message:"user is created ya man",
@@ -193,7 +194,8 @@ exports.forgetVerify= async(req,res,next)=>{
     const user=await User.findOne({email})
     const hashed=await bcrypt.hash(password,12)
     user.password=hashed;
-    user.confirmed=true;
+    email1.confirmed=true;
+    await email1.save();
     await user.save();
     res.status(200).json({
         message:"sucees the password has reset"

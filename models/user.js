@@ -1,7 +1,7 @@
 const mongoose=require('mongoose');
 const Schema=mongoose.Schema;
 
-const emailSchema=new Schema({
+const userSchema=new Schema({
 email:{
         type:String,
         required:true,
@@ -14,6 +14,17 @@ nameAr:{
 },
 nameEn:{
     type:String
-}
+},
+followers:[
+    {
+        user:{
+            type:Schema.Types.ObjectId,
+            ref:'user'
+        },
+        email:{
+            type:String
+        }
+    }
+]
 })
-module.exports=mongoose.model('user',emailSchema)
+module.exports=mongoose.model('user',userSchema)
