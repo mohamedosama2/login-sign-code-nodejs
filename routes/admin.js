@@ -10,6 +10,8 @@ router.get('/getUser/:userId',passport.authenticate('jwt',{session:false}),contr
 router.get('/getPosts',passport.authenticate('jwt',{session:false}),controllers.getPosts)
 router.get('/getPost/:postId',passport.authenticate('jwt',{session:false}),controllers.getPost)
 router.delete('/deleteComment/:postId/:commentId',passport.authenticate('jwt',{session:false}),controllers.deleteComment);
+router.post('/changeInfo',passport.authenticate('jwt',{session:false}),controllers.changeInfo);
+
 
 
 module.exports=router;

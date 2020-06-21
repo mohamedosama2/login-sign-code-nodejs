@@ -1,7 +1,7 @@
 const User=require('../models/user');
 const Post=require('../models/posts');
-const { post } = require('../routes/user');
-
+const Email=require('../models/email');
+const bcrypt=require('bcryptjs');
 
 exports.getUsers=async(req,res,next)=>{
     try{
@@ -165,4 +165,56 @@ exports.deleteComment=async(req,res,next)=>{
     catch(error){
         res.status(500).json({error})
     }   
+    }
+
+
+    exports.changeInfo=async(req,res,next)=>{
+        try{
+        const nameAr=req.body.nameAr;
+        const nameEn=req.body.nameEn;
+        const email=req.body.email;
+        const password=req.body.password;
+        const newPassword=req.body.newPassword;
+        if(req.user.rule!=='admin'){
+            return res.status(401).json({
+                message:"not Authorized"
+            })
+        }
+        const user=await User.findById(req.user.id)
+        if(!user){
+            return res.status(404).json({
+                message:"not found"
+            })
+        }
+        const email1=await Email.findOne({email:req.user.email})
+        if(!email1){
+            return res.status(404).json({
+                message:"not found"
+            })
+        }
+      
+        const doMatch=await bcrypt.compare(password,user.password);
+        if(!doMatch){
+            if(!user){
+                return res.status(400).json({
+                    message:"wrong password"
+                })
+            }
+        }
+        user.nameAr=nameAr;
+        user.nameEn=nameEn;
+        user.email=email;
+        user.password=newPassword;
+        email1.email=email
+        await email1.save();
+        await user.save();
+        res.status(200).json({
+            message:"information has changed sucessfully",
+            user
+        })
+    }
+    catch(error){
+        res.status(500).json({error});
+    }
+
     }
