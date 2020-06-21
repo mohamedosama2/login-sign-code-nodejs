@@ -2,6 +2,7 @@ const express=require('express');
 const controllers=require('../controllers/users')
 const passStr=require('../passport');
 const passport=require('passport')
+multer=require('../multer')
 
 const router=express.Router();
 
@@ -12,7 +13,7 @@ const router=express.Router();
 
 router.post('/otp/send',controllers.otpSend);
 router.post('/otp/verify',controllers.otpVerify);
-router.post('/signup',controllers.signUp)
+router.post('/signup',multer,controllers.signUp)
 router.post('/signin',controllers.signIn)
 router.post('/forget-password/send',controllers.forgetSend);
 router.post('/forget-password/verify',controllers.forgetVerify);

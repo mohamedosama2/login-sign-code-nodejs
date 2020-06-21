@@ -25,6 +25,13 @@ followers:[
             type:String
         }
     }
-]
+],
+image:{
+    type:String
+},
+rule:{
+    type:String,
+    default:'normal'
+}
 })
 module.exports=mongoose.model('user',userSchema)

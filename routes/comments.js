@@ -6,7 +6,6 @@ const router=express.Router();
 
 router.post('/addComment/:postId',passport.authenticate('jwt',{session:false}),controllers.addComment)
 router.put('/editComment/:postId/:commentId',passport.authenticate('jwt',{session:false}),controllers.editComment)
-router.delete('/deleteComment/:postId/:commentId',passport.authenticate('jwt',{session:false}),controllers.deleteComment);
 
 
 

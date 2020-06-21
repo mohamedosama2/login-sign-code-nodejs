@@ -8,6 +8,8 @@ var CodeGenerator = require('node-code-generator');
 var generator = new CodeGenerator();
 const jwt=require('jsonwebtoken');
 require('dotenv').config()
+const cloud=require('../cloud_config');
+const fs=require('fs');
 
 
 
@@ -79,6 +81,11 @@ exports.signUp= async(req,res,next)=>{
     const nameAr=req.body.nameAr;
     const nameEn=req.body.nameEn;
     const password=req.body.password;
+    const path=req.files[0].destination+'/'+req.files[0].originalname
+    const result=await cloud.uploads(path)
+    
+    
+
 
     const email1 =await Email.findOne({email,confirmed:true});
     if(!email1){
@@ -93,12 +100,14 @@ exports.signUp= async(req,res,next)=>{
     email:email,
     nameAr:nameAr,
     nameEn:nameEn,
-    password:hashed
+    password:hashed,
+    image:result.url
     })
     await user.save();
+    fs.unlinkSync(path)
     const accessToken=jwt.sign({
         sub:user._id,
-    },process.env.keyy,{expiresIn:'1h'})
+    },process.env.keyy,{expiresIn:'3h'})
     
     res.status(201).json({
         token:accessToken,
@@ -131,7 +140,7 @@ exports.signIn= async(req,res,next)=>{
     }
     const accessToken=jwt.sign({
         sub:user.id,
-    },process.env.keyy,{expiresIn:'1h'})
+    },process.env.keyy,{expiresIn:'3h'})
 
     res.status(200).json({
         message:"sucess",
