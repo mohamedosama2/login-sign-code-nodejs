@@ -17,35 +17,29 @@ exports.addLike=async(req,res,next)=>{
         })
     }
     let x=0;
-  await  post.likes.forEach( like => {
+    post.likes.forEach( like => {
         if(like.user){
-         if(req.user.email===like.email){
+         if(req.user.id.toString()===like.user.toString()){
              x=1
-            return res.status(409).json({
-                message:"already liked" 
-            })
         }
     }   
     });
-    console.log(x)
     if(x==1){
-        console.log(1)
         return res.status(409).json({
             message:"already liked" 
         })
     }
     
     if(!post.likes[0]){
-        console.log("sa77")
         post.likes.unshift({number:1})
-        post.likes.push({user:userId,email:req.user.email})
+        post.likes.push({user:userId})
         await post.save();
 
     }else{
         var newNumber=post.likes[0].number;
         newNumber=newNumber+1;
         post.likes[0].number=newNumber;
-        post.likes.push({user:userId,email:req.user.email})
+        post.likes.push({user:userId})
         await post.save();
 
     }

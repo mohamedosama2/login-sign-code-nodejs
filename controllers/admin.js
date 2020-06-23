@@ -46,6 +46,11 @@ exports.getUser=async(req,res,next)=>{
     }
     
     const posts=await Post.find()
+    if(!posts){
+        return res.status(404).json({
+            message:"not found "
+        })
+    }
 
     const postComment=[]
     const comments=[]
@@ -60,10 +65,9 @@ exports.getUser=async(req,res,next)=>{
              }
         })
         post.likes=post.likes.filter(function(l){
-            if(l.email){
+            if(l.user){
                 if(userId.toString()===l.user.toString()){
                     postlikes.push(post.text)
-                    console.log(l.user)
                     return userId.toString()===l.user.toString()
                 }
             }
@@ -151,7 +155,12 @@ exports.deleteComment=async(req,res,next)=>{
             message:"not Authorized"
         })
     }
-    const post=await Post.findById(postId);       
+    const post=await Post.findById(postId);     
+    if(!post){
+        return res.status(404).json({
+            message:"not found post"
+        })
+    }  
     post.comments=post.comments.filter(function(p){
        return p._id.toString()!==commentId.toString()
     })

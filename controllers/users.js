@@ -81,40 +81,54 @@ exports.signUp= async(req,res,next)=>{
     const nameAr=req.body.nameAr;
     const nameEn=req.body.nameEn;
     const password=req.body.password;
-    const path=req.files[0].destination+'/'+req.files[0].originalname
-    const result=await cloud.uploads(path)
-    
-    
-
-
     const email1 =await Email.findOne({email,confirmed:true});
     if(!email1){
         return res.status(404).json({
             message:"the email hasn't confirmed yet pleasse confirm"
         })
     }
-    
-
+    let user;
+    const existed=await User.findOne({email:email})
+    if(existed){
+        res.status(401).json({
+            message:"already existed"
+        })
+    }
     const hashed=await bcrypt.hash(password,12)
-    const user=new User({
-    email:email,
-    nameAr:nameAr,
-    nameEn:nameEn,
-    password:hashed,
-    image:result.url
-    })
-    await user.save();
-    fs.unlinkSync(path)
+    if(!req.files[0]){
+         user=new User({
+            email:email,
+            nameAr:nameAr,
+            nameEn:nameEn,
+            password:hashed,
+            })
+            await user.save();
+    }
+    else{
+        const path=req.files[0].destination+'/'+req.files[0].originalname
+        const result=await cloud.uploads(path)
+         user=new User({
+            email:email,
+            nameAr:nameAr,
+            nameEn:nameEn,
+            password:hashed,
+            image:result.url
+            })
+            await user.save();
+            fs.unlinkSync(path)
+    }
+
     const accessToken=jwt.sign({
         sub:user._id,
     },process.env.keyy,{expiresIn:'3h'})
-    
+
     res.status(201).json({
         token:accessToken,
         message:"user is created ya man",
         email:email,
     })
 }
+
 catch(error){
      res.status(500).json({error})
 }
@@ -132,6 +146,11 @@ exports.signIn= async(req,res,next)=>{
         })
     }
     const user=await User.findOne({email})
+    if(!user){
+        return res.status(404).json({
+            message:"not found"
+        })
+    }
     const doMathch=await bcrypt.compare(password,user.password);
     if(!doMathch){
         return res.status(400).json({
@@ -201,6 +220,11 @@ exports.forgetVerify= async(req,res,next)=>{
             })
     }
     const user=await User.findOne({email})
+    if(!user){
+        return res.status(404).json({
+            message:"not found"
+        })
+    }
     const hashed=await bcrypt.hash(password,12)
     user.password=hashed;
     email1.confirmed=true;

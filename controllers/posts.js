@@ -4,6 +4,8 @@ const User=require('../models/user');
 exports.getPosts=async(req,res,next)=>{
     try{
     const posts=await Post.find()
+    const post=await Post.findById('5eeeed4cd97fce444085f1d2').populate('likes.user')
+    console.log(post)
     if(!posts){
        return res.status(404).json({
             message:"can't find posts "
@@ -46,16 +48,17 @@ exports.editPost=async(req,res,next)=>{
     const postId=req.params.postId;
     const text=req.body.text;
     const post=await Post.findById(postId);
-    if(post.user.toString()!==req.user.id.toString()){
-       return res.status(401).json({
-            message:"not authorized"
-        })
-     }
     if(!post){
         return res.status(404).json({
             message:"can't find the post "
         })
     }
+    if(post.user.toString()!==req.user.id.toString()){
+       return res.status(403).json({
+            message:"forbidden"
+        })
+     }
+    
     post.text=text;
     await post.save();
     res.status(200).json({

@@ -7,12 +7,17 @@ exports.addComment=async(req,res,next)=>{
     const text=req.body.text;
     const user=await User.findById(req.user.id)
     if(!user){
-        return res.status(401).json({
-            message:"not authorized"
+        return res.status(404).json({
+            message:"not found"
         })
     }
     const post=await Post.findById(postId);
-    post.comments.push({text:text,user:req.user.id,email:req.user.email})
+    if(!post){
+        return res.status(404).json({
+            message:"not found"
+        })
+    }
+    post.comments.push({text:text,user:req.user.id})
    await post.save();
     res.status(200).json({
         message:"sucess",
@@ -37,10 +42,14 @@ exports.editComment=async(req,res,next)=>{
         })
     }
     const post=await Post.findById(postId);
+    if(!post){
+        return res.status(404).json({
+            message:"not found"
+        })
+    }
     post.comments.forEach(p => {
         if(p.id.toString()===commentId.toString()&&
            p.user.toString()===req.user.id.toString()){
-            console.log(p);
             p.text=text
             x=1
         }        

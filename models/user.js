@@ -20,9 +20,6 @@ followers:[
         user:{
             type:Schema.Types.ObjectId,
             ref:'user'
-        },
-        email:{
-            type:String
         }
     }
 ],

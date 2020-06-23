@@ -28,8 +28,8 @@ exports.getProfile=async(req,res,next)=>{
         })
     }
     if(user.id.toString()!==req.user.id.toString()){
-        return res.status(401).json({
-             message:"not authorized"
+        return res.status(403).json({
+             message:"forbiden"
          })
       }
     res.status(200).json({
@@ -69,16 +69,17 @@ exports.editUser=async(req,res,next)=>{
     const nameAr=req.body.nameAr
     const userId=req.params.userId;
     const user=await User.findById(userId)
-    if(req.user._id.toString()!==user._id.toString()){
-        return res.status(401).json({
-            message:"not authorized"
-        })
-     }
     if(!user){
         return res.status(404).json({
             message:"not found "
         })
     }
+    if(req.user._id.toString()!==user._id.toString()){
+        return res.status(403).json({
+            message:"forbidden"
+        })
+     }
+    
     user.nameAr=nameAr;
     user.nameEn=nameEn;
     await user.save()
@@ -103,6 +104,11 @@ exports.postFollow=async(req,res,next)=>{
         })
      }
     const user=await User.findById(userFollowing);
+    if(!user){
+        return res.status(404).json({
+            message:"not founded"
+        })
+    }
      user.followers.forEach(follower => {
          if(req.user.id.toString()===follower.user.toString()){
              return res.status(409).json({
@@ -112,7 +118,7 @@ exports.postFollow=async(req,res,next)=>{
          
      });
 
-    user.followers.push({user:req.user.id,email:req.user.email})
+    user.followers.push({user:req.user.id})
     await user.save();
     res.status(201).json({
         message:"followed successfully",
